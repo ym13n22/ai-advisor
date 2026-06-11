@@ -1,0 +1,6 @@
+{
+  "name": "RiskMind AI",
+  "description": "金融 AI 风险控制与决策分析平台 MVP (RiskMind AI Decision & Risk Control System)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
