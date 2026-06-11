@@ -1,90 +1,373 @@
-# RiskMind 金融 AI 风险控制与决策分析平台 MVP
+# RiskMind AI
 
-RiskMind 是一款面向金融机构（金融风控合规、高势增长拓新及主动资产管理团队）的一站式 AI 驱动决策平台 MVP。系统深度融合了经典**风控评分卡（Logistic Scorecard）**与**大语言模型生成式 AI (Gemini 3.5)**。
+RiskMind AI 是一个面向金融交易平台的 **B2B / B2B2C 风控与交易准入 MVP 演示系统**。
 
----
+系统围绕金融交易平台中的用户认证、风险评分、产品准入、交易风控、人工审核、增长分析和系统管理等场景，构建了一个完整的演示闭环。它适合用于产品原型展示、业务流程验证、风控系统 Demo、内部评审和 MVP 阶段功能验收。
 
-## 🚀 核心功能模块
-
-### 1. 简便极速场景测试 (Test Station Switcher)
-- 系统底层由统一 `database.json` 作为动态文件数据库支持。
-- 登录面板及控制台左下侧内置**“一键测试角色热流转台”**，允许调试员、风控分析师及合规主控官在 **Trader (内置交易员)**、**Admin (系统管理员)**、**Risk Analyst (风控分析组)**、**Growth Analyst (增长运营官)** 四种身份间秒级任意切换，零延迟即时测试并验证业务断层阻隔。
-
-### 2. 双通道实名 KYC 准入合规验证
-- 交易员可以向合规盾发起实名资料填报（包括姓名、身份证号码、出生国、出生日期等）。
-- 实名进件提交后，系统会将状态流转到 `PENDING`。
-- 登录中高阶审核角色（Admin 或 Risk 组）能进入专享**“实名合规复审队列”**对工单手动执行 `VERIFIED` / `REJECTED` / `MANUAL_REVIEW`，并填注合规意见，变更后智能评分卡和收益适配层秒级生效、全局传播。
-
-### 3. WOE + Logistic 回归信用评分卡实验室
-- 在前端“评分卡调试”板块，用户可以实时通过滑动条输入：**IP变化次数**、**设备环境跳转率**、**1分钟活跃机器频次**、及一键勾选入<b>反洗钱/欺诈黑名单库</b>。
-- 点击测算后，后台精确运用 **证据权重 (Weight of Evidence, WOE) 离散分箱法** 与 **Logistic 逻辑回归模型** 跑出定量违约概率 (PD, Probability of Default)，并完美映射出标准个人信用评分 (risk_score, 0-100)：
-  $$risk\_score = A - B \times \ln\left(\frac{PD}{1 - PD}\right)$$
-- 智能合规 AI 经理（支持 Mock 模板 / Ollama / Gemini 3.5 三种模式）自动生成专属CRO风控长分析报告，阐释分箱底数因子。
-
-### 4. 事中实时检测监控交易熔断引擎
-- 当交易员提交理财或交易认购时，系统实时行使事中穿透：
-  - **KYC未认证直接熔断 (BLOCK)**：必须首先在 KYC 板块取得 `VERIFIED`。
-  - **极低评分防范 (BLOCK)**：WOE 评分卡处于 20 以下 Critical 极高风险。
-  - **高危洗钱阻断 (BLOCK)**：命入欺诈黑名单直接拦截。
-  - **高频刷单减速制停 (REVIEW)**：1分钟内连交 5 笔交易。
-  - **异常大波偏离 (STEP_UP)**：单次申请额超出您历史均值交易额的 3 倍。强制发起 OTP 短信二次强安全增强。
-
-### 5. 首席增长官 (CGO) 转化漏斗与 AI 洞察
-- 数据看板精细统计真实用户的各阶段活跃：`Visit (网页访客) → Register (注册建立) → KYC Completed (实名核准) → First Deposit (首次入金) → First Trade (首次交易) → Active Trader (活跃复签)`。
-- 配置 **Recharts** 绘制转化漏斗剖析，由大模型智能诊断生成 **《CGO 转化增长商业季报》** 指引。
-
-### 6. 千人千面智能财富配置货架
-- 基于交易户的信用等级 (LOW/MEDIUM/HIGH) 匹配贴合的底层稳健债权、混合Beta或是高阿尔法进取型对冲产品，并由财富专家 AI 给出长篇投资适度理财理由。
+> 当前项目为 MVP / Demo 实现，不建议直接用于生产环境。
 
 ---
 
-## 🔑 免注册一键测试账号 (Demo Credentials)
+## 项目定位
 
-| 用户名 (Username) | 密码 (Password) | 默认系统角色 (RBAC Role) | 场景验证亮点 (Use Case Highlight) |
-| :--- | :--- | :--- | :--- |
-| **`trader`** | `trader123` | **Trader** *(普通交易户)* | 发起KYC审核流程、划扣模拟金、遭受大额 3x STEP_UP 二次阻断、选理财 |
-| **`admin`** | `admin123` | **Admin** *(最高主控制管理)* | 审批所有KYC审核单、热插拔切换底层 Mock/Gemini 大语言模型引擎、看 Swagger |
-| **`risk`** | `risk123` | **Risk Analyst** *(风控合规组)* | 在评分卡实验室里手动调节并调试 WOE 参数，查看全链路 BehaviorLogs |
-| **`growth`** | `growth123` | **Growth Analyst** *(高增长运营)* | 调阅日活跃(DAU)、转化漏斗Recharts及 LLM 分析报告 |
+RiskMind AI 主要解决以下问题：
+
+* Trader 用户是否完成有效 KYC？
+* Trader 当前是否具备交易权限？
+* 不同风险等级的产品是否允许当前用户交易？
+* 交易申请是否需要自动通过、拦截、人工审核或二次确认？
+* 风控人员如何审核 KYC、调整评分参数、处理风险交易？
+* 增长人员如何查看转化漏斗、机会人群和 AI 增长洞察？
+* 管理员如何进行用户管理、终审、审计和系统配置？
 
 ---
 
-## ⚙️ 统一 RESTful API 体系
+## 核心角色
 
-### ApiResponse 统一标准出参：
-```json
-{
-  "success": true,
-  "data": {},
-  "message": "执行反馈说明"
-}
+系统包含四类角色：
+
+| 角色             | 定位     | 核心职责                                  |
+| -------------- | ------ | ------------------------------------- |
+| Trader         | 平台交易客户 | 实名认证、充值、查看投资推荐、发起交易、查看交易结果            |
+| Risk Analyst   | 风控分析人员 | 审核 Trader KYC、维护评分参数、处理风险交易、查看风控日志    |
+| Growth Analyst | 增长分析人员 | 查看增长数据、漏斗、机会人群、实验与 AI 洞察              |
+| Admin          | 系统管理员  | 用户管理、KYC 终审、交易终审、审计日志、AI 与系统配置、演示数据重置 |
+
+---
+
+## 核心功能
+
+### Trader 端
+
+* 系统看板
+* 实名 KYC 提交与更新
+* 账户充值
+* 投资推荐
+* 产品准入判断
+* 交易申请
+* 交易结果展示
+* STEP_UP 二次确认
+* 交易记录查看
+
+Trader 端不会展示内部风控细节，例如精确评分、黑名单、设备指纹、IP 风险、风控阈值等，只展示用户可理解的交易权限和下一步操作建议。
+
+---
+
+### Risk Analyst 端
+
+* 风控工作台
+* Trader KYC 审核
+* 评分卡实验室
+* 交易风控台
+* Trader 相关风控审计日志
+
+Risk Analyst 可以调整评分参数，并影响 Trader 后续产品准入和交易判断。
+
+---
+
+### Growth Analyst 端
+
+* 增长总览
+* 漏斗与摩擦分析
+* 机会人群
+* 实验与 AI 洞察
+* AI 增长报告
+* 触达文案生成
+
+Growth Analyst 只能查看聚合数据，不会看到精确风险分、黑名单、设备指纹或内部模型因子。
+
+---
+
+### Admin 端
+
+* 全局系统看板
+* 用户管理
+* KYC 终审中心
+* 交易终审中心
+* 审计日志中心
+* AI 配置中心
+* 系统配置
+* 演示数据控制台
+
+Admin 拥有全局管理能力，但评分卡实验室仅向 Risk Analyst 开放。
+
+---
+
+## 风控逻辑概览
+
+系统交易准入按以下顺序判断：
+
+1. 是否具有有效 KYC
+2. 内部评分是否低于交易门槛
+3. 是否命中黑名单
+4. 产品风险等级是否在当前用户权限范围内
+5. 最近 1 分钟交易申请是否过于频繁
+6. 本次金额是否明显偏离历史交易金额
+7. 以上规则均未触发时自动通过
+
+交易结果包括：
+
+| 状态              | 含义       | 余额影响   |
+| --------------- | -------- | ------ |
+| `ALLOW`         | 交易通过     | 扣减余额   |
+| `BLOCK`         | 交易拦截     | 不扣减    |
+| `REVIEW`        | 等待审核     | 暂不扣减   |
+| `MANUAL_REVIEW` | 人工复核     | 暂不扣减   |
+| `STEP_UP`       | 需要用户二次确认 | 确认前不扣减 |
+
+---
+
+## 评分卡说明
+
+评分卡实验室使用 KYC 状态、IP 变化、设备切换、交易频率、黑名单等因素进行风险评分。
+
+示例输入项：
+
+* KYC 是否有效
+* IP 变化次数
+* 设备切换次数
+* 1 分钟交易频率
+* 是否命中黑名单
+
+评分结果会影响 Trader 的交易权限：
+
+| 分数区间   | 内部等级     | Trader 展示 | 可交易产品       |
+| ------ | -------- | --------- | ----------- |
+| 80-100 | LOW      | 高级交易权限    | 低风险、中风险、高风险 |
+| 50-79  | MEDIUM   | 标准交易权限    | 低风险、中风险     |
+| 20-49  | HIGH     | 基础交易权限    | 低风险         |
+| 0-19   | CRITICAL | 暂停交易      | 无           |
+
+---
+
+## 技术运行环境
+
+### 环境要求
+
+* Node.js
+* npm
+* Windows PowerShell 或命令提示符
+
+项目默认目录示例：
+
+```powershell
+F:\1D\myj\产品\riskmind-ai
 ```
 
-### 开放核心 API 路由：
-- **`POST /api/auth/register`** - 无上锁用户注册
-- **`POST /api/auth/login`** - 派发 session auth token 凭证
-- **`POST /api/auth/deposit`** - 补仓/注入模拟证券本金（记录审计日志）
-- **`POST /api/kyc/submit`** - 实名信息提报
-- **`POST /api/kyc/audit`** - [Admin/Risk可用] 终审并热触发重新风控算分
-- **`POST /api/risk/evaluate`** - 全要素 WOE 风控评分卡重新计算
-- **`POST /api/transactions/apply`** - 事中多要素规则风控交易安全申购
-- **`GET /api/growth/metrics`** - 获取转化增长漏斗及大模型诊断周报
-- **`POST /api/ai/config`** - [Admin可用] 动态温和连入 Ollama / Gemini 3.5
+---
+
+## 安装与启动
+
+### 1. 安装依赖
+
+```powershell
+cd "F:\1D\myj\产品\riskmind-ai"
+npm.cmd install
+```
+
+### 2. 启动开发环境
+
+```powershell
+npm.cmd run dev
+```
+
+默认访问地址：
+
+```text
+http://127.0.0.1:3000
+```
+
+### 3. 代码检查
+
+```powershell
+npm.cmd run lint
+```
+
+### 4. 生产构建
+
+```powershell
+npm.cmd run build
+```
+
+### 5. 启动生产服务
+
+```powershell
+npm.cmd start
+```
 
 ---
 
-## 📦 本地运行维护启动 (Production Commands)
+## 演示账号
 
-```bash
-# 1. 安装核心运行组件
-npm install
+| 用户名          | 密码          | 角色             |
+| ------------ | ----------- | -------------- |
+| `trader`     | `trader123` | Trader         |
+| `vip_trader` | 演示环境使用      | Trader         |
+| `risk`       | `risk123`   | Risk Analyst   |
+| `growth`     | `growth123` | Growth Analyst |
+| `admin`      | `admin123`  | Admin          |
 
-# 2. 启动开发模式（前端热搭载中间件 + 后端 Express 监听 Port 3000）
-npm run dev
+> 当前版本为 MVP，服务端登录主要按用户名识别账号，尚未实现生产级密码校验。
 
-# 3. 生产构包打包（Vite静态资源打包 + esbuild CJS 零依赖后端集成）
-npm run build
+---
 
-# 4. standalone 启动生产 release 版本
-npm run start
+## 端口占用处理
+
+如果启动时出现：
+
+```text
+EADDRINUSE: address already in use 0.0.0.0:3000
 ```
+
+可以查看 3000 端口占用进程：
+
+```powershell
+Get-NetTCPConnection -LocalPort 3000 | Select-Object LocalAddress,LocalPort,State,OwningProcess
+```
+
+确认是旧开发服务后结束进程：
+
+```powershell
+Stop-Process -Id <OwningProcess>
+```
+
+如果 Vite WebSocket 端口 `24678` 被占用，通常也是旧开发服务未关闭，结束旧服务后重新运行：
+
+```powershell
+npm.cmd run dev
+```
+
+---
+
+## 数据说明
+
+当前 MVP 中，主要数据保存于：
+
+```text
+database.json
+```
+
+包括：
+
+* 用户信息和余额
+* KYC 资料及状态
+* 风险评分记录
+* 交易记录
+* 充值记录
+* 审计日志
+* 产品数据
+
+部分数据仅在当前运行期间或前端会话中有效，例如：
+
+* AI Provider 页面修改
+* 系统配置
+* Growth 新建 Mock 实验
+
+---
+
+## Growth 数据口径说明
+
+Growth 模块属于 MVP 混合口径：
+
+* 部分指标来自 `database.json`
+* 部分漏斗、渠道、机会人群和产品曝光数据使用 Mock 数据
+* 累计 GMV 包含真实已通过交易金额和预置演示基数
+
+因此 Growth 页面适合功能演示和流程验收，不建议作为正式经营报表使用。
+
+---
+
+## 当前 MVP 限制
+
+当前版本仍有以下限制：
+
+* 登录和令牌机制为演示实现，不具备生产级安全性
+* 数据存放在单个 JSON 文件中，不适合高并发生产环境
+* Growth 指标包含 Mock 数据
+* Growth 新建实验不会持久化
+* AI 和系统配置不会自动写回 `.env` 或数据库
+* STEP_UP 是页面确认，不是真实 OTP / 短信 / 邮件验证
+* Risk Analyst 人工放行时可能使用演示沙盒授信
+* 部分系统配置尚未接入实际交易规则
+* Trader 交易记录暂无独立详情页
+* 当前审计日志主要记录成功请求，部分失败请求尚未完整记录
+
+---
+
+## 正式上线前建议补充
+
+如果要将本项目从 MVP 推向生产环境，建议优先补充：
+
+* 生产级用户认证
+* 密码哈希与会话安全
+* 数据库替代 JSON 文件
+* API 权限与角色访问控制测试
+* 配置持久化
+* 真实 STEP_UP 二次验证
+* 资金账本与余额冻结机制
+* 交易幂等控制
+* 完整失败审计
+* 模型版本管理
+* 风控规则审批与回滚机制
+* 日志脱敏与密钥安全管理
+
+---
+
+## 推荐演示流程
+
+建议按照以下顺序进行产品演示：
+
+1. 使用 Admin 检查用户和预置 KYC
+2. 使用 Trader 更新 KYC，验证旧认证有效期内仍可交易
+3. 使用 Risk Analyst 调整 Trader 评分参数并保存
+4. 切回 Trader，确认产品范围随评分变化
+5. 提交普通、小额、高频和大额交易
+6. 对 `STEP_UP` 交易执行二次确认
+7. 使用 Risk Analyst 处理审核中交易
+8. 使用 Admin 查看交易详情和全量审计日志
+9. 使用 Growth Analyst 查看增长总览、漏斗、机会人群和 AI 洞察
+10. 使用 Admin 演示数据控制台恢复默认数据
+
+---
+
+## 项目状态
+
+当前项目状态：
+
+```text
+MVP / Demo
+```
+
+适合：
+
+* 产品原型展示
+* 风控业务流程验证
+* 内部评审
+* 客户 Demo
+* 早期商业化探索
+
+不适合：
+
+* 真实资金交易
+* 生产环境直接部署
+* 高并发业务
+* 正式经营报表
+* 生产级合规审计
+
+---
+
+## License
+
+本项目当前未指定开源协议。
+
+如计划公开发布，建议根据实际商业目标选择合适协议，例如：
+
+* MIT License
+* Apache License 2.0
+* Private / Proprietary License
+
+---
+
+## Author
+
+RiskMind AI MVP Project
