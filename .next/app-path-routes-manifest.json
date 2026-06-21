@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/chat/route": "/api/chat",
+  "/api/bootstrap/route": "/api/bootstrap",
+  "/api/clarification/route": "/api/clarification",
+  "/api/logs/route": "/api/logs",
+  "/api/metrics/route": "/api/metrics",
+  "/api/products/[id]/route": "/api/products/[id]",
+  "/api/products/route": "/api/products",
+  "/api/profile/route": "/api/profile",
+  "/api/trade/check/route": "/api/trade/check",
+  "/api/trade/interaction/route": "/api/trade/interaction",
+  "/page": "/"
+}

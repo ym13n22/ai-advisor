@@ -1,8 +1,14 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/chat/route": "app/api/chat/route.js",
   "/api/bootstrap/route": "app/api/bootstrap/route.js",
+  "/api/clarification/route": "app/api/clarification/route.js",
+  "/api/logs/route": "app/api/logs/route.js",
+  "/api/metrics/route": "app/api/metrics/route.js",
+  "/api/products/[id]/route": "app/api/products/[id]/route.js",
+  "/api/products/route": "app/api/products/route.js",
+  "/api/profile/route": "app/api/profile/route.js",
   "/api/trade/check/route": "app/api/trade/check/route.js",
   "/api/trade/interaction/route": "app/api/trade/interaction/route.js",
-  "/api/logs/route": "app/api/logs/route.js",
-  "/api/chat/route": "app/api/chat/route.js",
   "/page": "app/page.js"
 }
