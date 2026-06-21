@@ -1,373 +1,244 @@
-# RiskMind AI
+# AI 顾投小助手 MVP
 
-RiskMind AI 是一个面向金融交易平台的 **B2B / B2B2C 风控与交易准入 MVP 演示系统**。
+这是一个本地可运行的 To C AI 顾投小助手 MVP。当前版本以“产品浏览与交易”为默认入口，用户可以正常买入/卖出产品；系统在进入交易确认页时同步做冲突判断，并以非阻断浮层展示风险提示。
 
-系统围绕金融交易平台中的用户认证、风险评分、产品准入、交易风控、人工审核、增长分析和系统管理等场景，构建了一个完整的演示闭环。它适合用于产品原型展示、业务流程验证、风控系统 Demo、内部评审和 MVP 阶段功能验收。
+## 当前版本重点
 
-> 当前项目为 MVP / Demo 实现，不建议直接用于生产环境。
+- 默认进入产品页。
+- 点击买入/卖出后进入交易确认页。
+- 冲突提示不阻断交易确认流程。
+- 中/高风险提示都提供“撤回操作”。
+- 无追问的提示提供“撤回操作 / 继续操作”。
+- 有追问的提示提供“撤回操作 / 打开对话回答 / 关闭提示”。
+- 左侧“对话”栏目不切换页面，只打开悬浮 AI 对话框。
+- 悬浮 AI 对话框里有两个独立输入区：
+  - 仅在有追问时出现的“回答追问”输入框。
+  - 始终可用的“问 AI 一个问题”输入框。
+- 前端已移除指标页面；后端 `/api/metrics` 暂保留用于测试和后续扩展。
 
----
+## 技术栈
 
-## 项目定位
+- 前端：Next.js + TypeScript + Tailwind CSS
+- UI：本地 shadcn/ui 风格轻量组件
+- 后端：Next.js Route Handlers
+- 数据库：SQLite
+- ORM：Prisma
+- 校验：Zod
+- LLM：统一 Provider，默认 Mock，可切换 OpenAI-compatible API
+- 测试：Vitest
+- 包管理器：pnpm
 
-RiskMind AI 主要解决以下问题：
+## 快速启动
 
-* Trader 用户是否完成有效 KYC？
-* Trader 当前是否具备交易权限？
-* 不同风险等级的产品是否允许当前用户交易？
-* 交易申请是否需要自动通过、拦截、人工审核或二次确认？
-* 风控人员如何审核 KYC、调整评分参数、处理风险交易？
-* 增长人员如何查看转化漏斗、机会人群和 AI 增长洞察？
-* 管理员如何进行用户管理、终审、审计和系统配置？
-
----
-
-## 核心角色
-
-系统包含四类角色：
-
-| 角色             | 定位     | 核心职责                                  |
-| -------------- | ------ | ------------------------------------- |
-| Trader         | 平台交易客户 | 实名认证、充值、查看投资推荐、发起交易、查看交易结果            |
-| Risk Analyst   | 风控分析人员 | 审核 Trader KYC、维护评分参数、处理风险交易、查看风控日志    |
-| Growth Analyst | 增长分析人员 | 查看增长数据、漏斗、机会人群、实验与 AI 洞察              |
-| Admin          | 系统管理员  | 用户管理、KYC 终审、交易终审、审计日志、AI 与系统配置、演示数据重置 |
-
----
-
-## 核心功能
-
-### Trader 端
-
-* 系统看板
-* 实名 KYC 提交与更新
-* 账户充值
-* 投资推荐
-* 产品准入判断
-* 交易申请
-* 交易结果展示
-* STEP_UP 二次确认
-* 交易记录查看
-
-Trader 端不会展示内部风控细节，例如精确评分、黑名单、设备指纹、IP 风险、风控阈值等，只展示用户可理解的交易权限和下一步操作建议。
-
----
-
-### Risk Analyst 端
-
-* 风控工作台
-* Trader KYC 审核
-* 评分卡实验室
-* 交易风控台
-* Trader 相关风控审计日志
-
-Risk Analyst 可以调整评分参数，并影响 Trader 后续产品准入和交易判断。
-
----
-
-### Growth Analyst 端
-
-* 增长总览
-* 漏斗与摩擦分析
-* 机会人群
-* 实验与 AI 洞察
-* AI 增长报告
-* 触达文案生成
-
-Growth Analyst 只能查看聚合数据，不会看到精确风险分、黑名单、设备指纹或内部模型因子。
-
----
-
-### Admin 端
-
-* 全局系统看板
-* 用户管理
-* KYC 终审中心
-* 交易终审中心
-* 审计日志中心
-* AI 配置中心
-* 系统配置
-* 演示数据控制台
-
-Admin 拥有全局管理能力，但评分卡实验室仅向 Risk Analyst 开放。
-
----
-
-## 风控逻辑概览
-
-系统交易准入按以下顺序判断：
-
-1. 是否具有有效 KYC
-2. 内部评分是否低于交易门槛
-3. 是否命中黑名单
-4. 产品风险等级是否在当前用户权限范围内
-5. 最近 1 分钟交易申请是否过于频繁
-6. 本次金额是否明显偏离历史交易金额
-7. 以上规则均未触发时自动通过
-
-交易结果包括：
-
-| 状态              | 含义       | 余额影响   |
-| --------------- | -------- | ------ |
-| `ALLOW`         | 交易通过     | 扣减余额   |
-| `BLOCK`         | 交易拦截     | 不扣减    |
-| `REVIEW`        | 等待审核     | 暂不扣减   |
-| `MANUAL_REVIEW` | 人工复核     | 暂不扣减   |
-| `STEP_UP`       | 需要用户二次确认 | 确认前不扣减 |
-
----
-
-## 评分卡说明
-
-评分卡实验室使用 KYC 状态、IP 变化、设备切换、交易频率、黑名单等因素进行风险评分。
-
-示例输入项：
-
-* KYC 是否有效
-* IP 变化次数
-* 设备切换次数
-* 1 分钟交易频率
-* 是否命中黑名单
-
-评分结果会影响 Trader 的交易权限：
-
-| 分数区间   | 内部等级     | Trader 展示 | 可交易产品       |
-| ------ | -------- | --------- | ----------- |
-| 80-100 | LOW      | 高级交易权限    | 低风险、中风险、高风险 |
-| 50-79  | MEDIUM   | 标准交易权限    | 低风险、中风险     |
-| 20-49  | HIGH     | 基础交易权限    | 低风险         |
-| 0-19   | CRITICAL | 暂停交易      | 无           |
-
----
-
-## 技术运行环境
-
-### 环境要求
-
-* Node.js
-* npm
-* Windows PowerShell 或命令提示符
-
-项目默认目录示例：
-
-```powershell
-F:\1D\myj\产品\riskmind-ai
+```bash
+pnpm install
+pnpm prisma migrate dev
+pnpm prisma db seed
+pnpm dev
 ```
 
----
+访问：
 
-## 安装与启动
-
-### 1. 安装依赖
-
-```powershell
-cd "F:\1D\myj\产品\riskmind-ai"
-npm.cmd install
+```bash
+http://localhost:3000
 ```
 
-### 2. 启动开发环境
+Windows PowerShell 如果因为执行策略拦截 `pnpm.ps1`，使用等价命令：
 
-```powershell
-npm.cmd run dev
+```bash
+pnpm.cmd install
+pnpm.cmd prisma migrate dev
+pnpm.cmd prisma db seed
+pnpm.cmd dev
 ```
 
-默认访问地址：
+## 环境变量
 
-```text
-http://127.0.0.1:3000
+复制 `.env.example` 为 `.env`：
+
+```bash
+DATABASE_URL="file:./dev.db"
+LLM_MODE="mock"
+OPENAI_COMPATIBLE_BASE_URL="https://api.openai.com/v1"
+OPENAI_COMPATIBLE_API_KEY=""
+OPENAI_COMPATIBLE_MODEL="gpt-4.1-mini"
 ```
 
-### 3. 代码检查
+## LLM 模式
 
-```powershell
-npm.cmd run lint
+默认使用 Mock 模式，无需 API Key。
+
+```bash
+LLM_MODE="mock"
 ```
 
-### 4. 生产构建
+切换到 OpenAI-compatible API：
 
-```powershell
-npm.cmd run build
+```bash
+LLM_MODE="openai"
+OPENAI_COMPATIBLE_BASE_URL="https://api.openai.com/v1"
+OPENAI_COMPATIBLE_API_KEY="你的 key"
+OPENAI_COMPATIBLE_MODEL="gpt-4.1-mini"
 ```
 
-### 5. 启动生产服务
+真实模型不可用、超时、JSON 异常或置信度不足时，系统会降级为 Mock 或安全模板，不中断页面流程。
 
-```powershell
-npm.cmd start
+## 演示数据
+
+Seed 会创建演示用户“用户 A”和 5 个产品：
+
+- 货币基金：低波动，T+1
+- 债券基金：中低波动，T+2
+- 指数基金：中高波动，T+3
+- 高波动股票基金：高波动，T+7
+- 封闭理财：180 天封闭期
+
+初始化命令：
+
+```bash
+pnpm prisma migrate dev
+pnpm prisma db seed
 ```
 
----
+## 主要页面
 
-## 演示账号
+### 产品页
 
-| 用户名          | 密码          | 角色             |
-| ------------ | ----------- | -------------- |
-| `trader`     | `trader123` | Trader         |
-| `vip_trader` | 演示环境使用      | Trader         |
-| `risk`       | `risk123`   | Risk Analyst   |
-| `growth`     | `growth123` | Growth Analyst |
-| `admin`      | `admin123`  | Admin          |
+默认首页。展示产品列表，每个产品有买入/卖出按钮。
 
-> 当前版本为 MVP，服务端登录主要按用户名识别账号，尚未实现生产级密码校验。
+交易流程：
 
----
+1. 用户点击买入或卖出。
+2. 后端执行确定性冲突判断。
+3. 页面进入交易确认页。
+4. 如果有中/高风险，右下角展示非阻断风险提示。
+5. 用户可继续确认交易，也可通过提示浮层撤回操作。
 
-## 端口占用处理
+### 交易确认页
 
-如果启动时出现：
+展示：
 
-```text
-EADDRINUSE: address already in use 0.0.0.0:3000
+- 交易方向
+- 交易金额
+- 产品类型
+- 风险等级
+- 历史最大回撤
+- 赎回到账时间
+- 同步风险提示摘要
+
+按钮：
+
+- 返回修改
+- 确认提交
+
+### 悬浮 AI 对话框
+
+入口：
+
+- 左侧“对话”栏目
+- 左下角悬浮“对话”按钮
+- 风险提示里的“打开对话回答”
+
+能力：
+
+- 回答系统追问。
+- 主动问 AI 问题。
+- 高冲突时提交回答并触发画像更新校验。
+- 对话不阻断交易流程。
+
+### 用户画像页
+
+维护用户画像问卷字段，并展示后端派生字段。派生计算集中在：
+
+```bash
+src/domain/profile/deriveProfile.ts
 ```
 
-可以查看 3000 端口占用进程：
+### 日志页
 
-```powershell
-Get-NetTCPConnection -LocalPort 3000 | Select-Object LocalAddress,LocalPort,State,OwningProcess
+展示：
+
+- AI 调用日志
+- 识别结果
+- 画像路由日志
+- 冲突判断日志
+- 冲突互动日志
+- 画像更新建议和更新结果
+- 合规检测日志
+
+支持展开查看 JSON，并导出 JSON。
+
+## 领域规则
+
+冲突规则位于：
+
+```bash
+src/domain/conflicts/
 ```
 
-确认是旧开发服务后结束进程：
+已实现规则：
 
-```powershell
-Stop-Process -Id <OwningProcess>
+1. 损失承受-历史回撤冲突
+2. 期限-流动性冲突
+3. 目标刚性-产品波动冲突
+4. 中途用款-产品波动冲突
+5. 风险缓冲弱-持仓风险冲突
+6. 资金缺口-风险承担冲突
+7. 恐慌卖出-长期目标冲突
+8. 兴奋买入-风险承受冲突
+
+规则由 TypeScript 纯函数实现，LLM 不参与冲突等级判断。
+
+## 核心目录
+
+```bash
+app/api/                  Next.js API Routes
+app/page.tsx              单页前端主界面
+prisma/schema.prisma      Prisma 数据模型
+prisma/seed.ts            演示数据
+src/config/               字段和路由配置
+src/domain/profile/       画像派生计算
+src/domain/conflicts/     冲突规则引擎
+src/domain/compliance/    合规检测
+src/lib/llm/              LLM Provider
+src/server/               后端编排服务
+src/test/                 规则测试
 ```
 
-如果 Vite WebSocket 端口 `24678` 被占用，通常也是旧开发服务未关闭，结束旧服务后重新运行：
+## 验证命令
 
-```powershell
-npm.cmd run dev
+```bash
+pnpm test
+pnpm lint
+pnpm build
 ```
 
----
+Windows PowerShell：
 
-## 数据说明
-
-当前 MVP 中，主要数据保存于：
-
-```text
-database.json
+```bash
+pnpm.cmd test
+pnpm.cmd lint
+pnpm.cmd build
 ```
 
-包括：
+当前测试覆盖：
 
-* 用户信息和余额
-* KYC 资料及状态
-* 风险评分记录
-* 交易记录
-* 充值记录
-* 审计日志
-* 产品数据
+- 16 个冲突规则单元测试
+- 4 个 API 测试
 
-部分数据仅在当前运行期间或前端会话中有效，例如：
+## 当前取舍
 
-* AI Provider 页面修改
-* 系统配置
-* Growth 新建 Mock 实验
+- 这是 MVP，不包含真实登录、真实账户、真实订单系统和支付清算。
+- 交易“确认提交”是前端演示状态，不是真实下单。
+- Prisma SQLite 当前版本不支持原生 Json 字段，项目使用 TEXT 保存序列化 JSON。
+- 当前环境下 Prisma `migrate dev` 存在 schema-engine 兼容问题，因此项目通过 `scripts/prisma-wrapper.ts` 将 `pnpm prisma migrate dev` 包装为执行 migration SQL 并生成 Prisma Client。
+- 指标页面已从前端删除，但后端 metrics API 暂保留。
 
----
+## 生产化建议
 
-## Growth 数据口径说明
-
-Growth 模块属于 MVP 混合口径：
-
-* 部分指标来自 `database.json`
-* 部分漏斗、渠道、机会人群和产品曝光数据使用 Mock 数据
-* 累计 GMV 包含真实已通过交易金额和预置演示基数
-
-因此 Growth 页面适合功能演示和流程验收，不建议作为正式经营报表使用。
-
----
-
-## 当前 MVP 限制
-
-当前版本仍有以下限制：
-
-* 登录和令牌机制为演示实现，不具备生产级安全性
-* 数据存放在单个 JSON 文件中，不适合高并发生产环境
-* Growth 指标包含 Mock 数据
-* Growth 新建实验不会持久化
-* AI 和系统配置不会自动写回 `.env` 或数据库
-* STEP_UP 是页面确认，不是真实 OTP / 短信 / 邮件验证
-* Risk Analyst 人工放行时可能使用演示沙盒授信
-* 部分系统配置尚未接入实际交易规则
-* Trader 交易记录暂无独立详情页
-* 当前审计日志主要记录成功请求，部分失败请求尚未完整记录
-
----
-
-## 正式上线前建议补充
-
-如果要将本项目从 MVP 推向生产环境，建议优先补充：
-
-* 生产级用户认证
-* 密码哈希与会话安全
-* 数据库替代 JSON 文件
-* API 权限与角色访问控制测试
-* 配置持久化
-* 真实 STEP_UP 二次验证
-* 资金账本与余额冻结机制
-* 交易幂等控制
-* 完整失败审计
-* 模型版本管理
-* 风控规则审批与回滚机制
-* 日志脱敏与密钥安全管理
-
----
-
-## 推荐演示流程
-
-建议按照以下顺序进行产品演示：
-
-1. 使用 Admin 检查用户和预置 KYC
-2. 使用 Trader 更新 KYC，验证旧认证有效期内仍可交易
-3. 使用 Risk Analyst 调整 Trader 评分参数并保存
-4. 切回 Trader，确认产品范围随评分变化
-5. 提交普通、小额、高频和大额交易
-6. 对 `STEP_UP` 交易执行二次确认
-7. 使用 Risk Analyst 处理审核中交易
-8. 使用 Admin 查看交易详情和全量审计日志
-9. 使用 Growth Analyst 查看增长总览、漏斗、机会人群和 AI 洞察
-10. 使用 Admin 演示数据控制台恢复默认数据
-
----
-
-## 项目状态
-
-当前项目状态：
-
-```text
-MVP / Demo
-```
-
-适合：
-
-* 产品原型展示
-* 风控业务流程验证
-* 内部评审
-* 客户 Demo
-* 早期商业化探索
-
-不适合：
-
-* 真实资金交易
-* 生产环境直接部署
-* 高并发业务
-* 正式经营报表
-* 生产级合规审计
-
----
-
-## License
-
-本项目当前未指定开源协议。
-
-如计划公开发布，建议根据实际商业目标选择合适协议，例如：
-
-* MIT License
-* Apache License 2.0
-* Private / Proprietary License
-
----
-
-## Author
-
-RiskMind AI MVP Project
+- 接入真实登录、账户、持仓、订单和交易确认系统。
+- 将交易撤回/继续与真实订单状态机打通。
+- 增加不可篡改审计日志。
+- 增加真实产品数据源和申赎日历。
+- 增加 Prompt 版本、规则版本和字段版本管理。
+- 增加端到端浏览器测试和模型质量评估集。

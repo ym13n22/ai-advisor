@@ -1,0 +1,4 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "ignorePatterns": ["dist/", "src/App.tsx", "src/main.tsx", "src/types.ts", "server.ts"]
+}

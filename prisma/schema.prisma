@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  profile       UserProfile?
+  goals         InvestmentGoal[]
+  conversations Conversation[]
+  messages      Message[]
+  aiCallLogs    AiCallLog[]
+}
+
+model UserProfile {
+  id                          String   @id @default(cuid())
+  userId                      String   @unique
+  emergencyFund               Int
+  monthlyNecessaryExpense      Int
+  incomeStability             String
+  monthlyDebtPayment          Int
+  monthlyAfterTaxIncome       Int
+  otherAvailableFunds         Int
+  earliestUseDate             DateTime
+  goalUseDate                 DateTime
+  delayTolerance              String
+  interimFundingProbability   Int
+  maxLossAmount               Int
+  maxLossRatio                Float
+  postLossFundingNeed         String
+  recoveryWaitMonths          Int
+  investmentYears             Int
+  productTypes                String
+  maxDrawdownExperience       String
+  marketCycleExperience       String
+  selfDecisionLevel           String
+  companionType               String
+  proactiveContactPreference  String
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  user                        User     @relation(fields: [userId], references: [id])
+}
+
+model InvestmentGoal {
+  id                     String   @id @default(cuid())
+  userId                 String
+  goalType               String
+  targetAmount           Int
+  targetMonths           Int
+  currentPreparedAmount  Int
+  monthlyInvestment      Int
+  oneTimeAdditional      Int
+  postponeScore          Int
+  amountAdjustScore      Int
+  fallbackScore          Int
+  consequenceScore       Int
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id                    String   @id @default(cuid())
+  name                  String
+  productType           String
+  historicalMaxDrawdown Float
+  hasLockup             Boolean
+  lockupDays            Int
+  earliestRedeemDate    DateTime?
+  redeemArrivalDays     Int
+  riskLevel             String
+  description           String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  userId         String
+  conversationId String
+  role           String
+  content        String
+  metadata       String?
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id])
+  conversation   Conversation  @relation(fields: [conversationId], references: [id])
+}
+
+model AiCallLog {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  version        String
+  callType       String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model RecognitionResult {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  intent         String
+  emotion        String
+  executionStage String
+  confidence     Float
+  createdAt      DateTime @default(now())
+}
+
+model ProfileRoutingLog {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+}
+
+model ConflictEvent {
+  id                   String   @id @default(cuid())
+  userId               String
+  conversationId        String?
+  requestId             String
+  conflictPairId        String
+  version               String
+  input                 String
+  output                String
+  success               Boolean
+  errorCode             String?
+  latencyMs             Int
+  overallConflictLevel  String
+  status                String
+  createdAt             DateTime @default(now())
+}
+
+model ConflictInteraction {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  conflictPairId String
+  action         String
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+}
+
+model ProfileUpdateProposal {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  conflictPairId String?
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+}
+
+model ProfileUpdateLog {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  conflictPairId String?
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+}
+
+model ComplianceCheckLog {
+  id             String   @id @default(cuid())
+  userId         String
+  conversationId String?
+  requestId      String
+  version        String
+  input          String
+  output         String
+  success        Boolean
+  errorCode      String?
+  latencyMs      Int
+  createdAt      DateTime @default(now())
+}
